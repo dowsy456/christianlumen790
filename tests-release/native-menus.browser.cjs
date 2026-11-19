@@ -1,0 +1,40 @@
+'use strict';
+const assert = require('node:assert/strict'), path = require('node:path'), fs = require('node:fs/promises');
+const { pathToFileURL } = require('node:url');
+const { chromium } = require('playwright');
+const { trayModel } = require('../desktop/tray.cjs'), { EXTRA_ICON_DATA } = require('../desktop/taskbar.cjs');
+(async () => {
+  const browser = await chromium.launch({ channel: process.env.BROWSER_CHANNEL || 'chrome', headless: true });
+  const qa = path.resolve(__dirname, '../../native-menu-qa'); await fs.mkdir(qa, { recursive: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 320, height: 520 } }), errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => { window.chatTray = { onState: fn => window.__state = fn, command: value => { window.__command = value; return Promise.resolve(true); } }; });
+    await page.goto(pathToFileURL(path.resolve(__dirname, '../desktop/ui/tray.html')).href);
+    await page.evaluate(value => __state(value), { ...trayModel({ active: true, roomId: 'room', sessionId: 'session', roomName: 'Study Group · Evening call', controls: { sharing: true } }), extraIcons: EXTRA_ICON_DATA });
+    assert.equal(await page.getByRole('button', { name: 'Stop Sharing', exact: true }).count(), 1);
+    await page.getByRole('button', { name: 'Mute', exact: true }).click();
+    assert.deepEqual(await page.evaluate(() => __command), { action: 'mute', roomId: 'room', sessionId: 'session' });
+    assert.ok(await page.evaluate(() => [...document.images].every(image => image.complete && image.naturalWidth > 0)), 'all native control icons load');
+    assert.equal(await page.evaluate(() => document.querySelector('main').scrollHeight <= document.querySelector('main').clientHeight), true, 'menu fits without clipped controls');
+    assert.equal(await page.evaluate(() => [...document.querySelectorAll('button')].every(button => { const icon=button.querySelector('svg,img'),r=button.getBoundingClientRect(),i=icon?.getBoundingClientRect();return !!i&&Math.abs((i.top+i.bottom-r.top-r.bottom)/2)<.1&&i.width===21&&i.height===21; })),true,'every tray icon has a centered 21px box');
+    await page.screenshot({ path: path.join(qa, 'tray-menu.png'), omitBackground: true });
+    await page.evaluate(value => __state(value), { ...trayModel({active:false}), extraIcons: EXTRA_ICON_DATA });
+    assert.equal(await page.locator('#status').isVisible(),false,'idle status label is removed');
+    assert.equal(await page.getByText('Running in the background').count(),0);
+    assert.equal(await page.locator('footer button svg').count(),2,'footer uses centered SVG icons instead of baseline-dependent text glyphs');
+    await page.screenshot({ path: path.join(qa, 'tray-idle.png'), omitBackground: true });
+    const pings = await browser.newPage({ viewport: { width: 350, height: 430 } });
+    pings.on('pageerror', error => errors.push(error.message));
+    await pings.addInitScript(() => { window.ringPopup = { mode: 'pings', onState: fn => window.__state = fn, command: value => { window.__command = value; return Promise.resolve(true); } }; });
+    await pings.goto(pathToFileURL(path.resolve(__dirname, '../desktop/ui/rings.html')).href);
+    await pings.evaluate(() => __state({ pings: [{ id: 'new', roomId: 'r', messageKey: 'new-key', roomName: 'Study group', username: 'Alex', preview: 'Latest mention' }], earlier: Array.from({ length: 9 }, (_, i) => ({ id: 'old-' + i, roomId: 'r', messageKey: 'key-' + i, roomName: 'Study group', username: 'Sam', preview: 'Earlier mention ' + i })) }));
+    await pings.getByRole('button', { name: '+9 earlier mentions', exact: true }).click();
+    await pings.locator('.earlier-open-message').last().click();
+    assert.deepEqual(await pings.evaluate(() => __command), { action: 'open', id: 'old-0', roomId: 'r', messageKey: 'key-0' });
+    assert.equal(await pings.locator('.earlier-open-message').count(), 9);
+    assert.equal(await pings.locator('.ring.ping').isVisible(), false);
+    await pings.screenshot({ path: path.join(qa, 'earlier-mentions.png'), omitBackground: true });
+    assert.deepEqual(errors, []); console.log('Native tray and earlier mention renderer checks passed.');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });
