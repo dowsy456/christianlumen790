@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:;">
+  <title>Chat App</title>
+  <link rel="stylesheet" href="tray.css">
+</head>
+<body>
+  <main class="tray">
+    <header><img src="../assets/chat-app.png" alt=""><div><h1 id="room">Chat App</h1><p id="status" hidden></p></div></header>
+    <nav id="controls" aria-label="Call controls"></nav>
+    <section id="music" aria-label="Music" hidden>
+      <div class="music-track">
+        <button class="music-art" id="music-art" data-music="open" aria-label="Open Music">
+          <img id="music-art-image" alt="" draggable="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg>
+        </button>
+        <div class="music-copy">
+          <div class="music-title-row"><button id="music-title" data-music="open"></button><i id="music-loading" role="status" aria-label="Loading audio" hidden></i></div>
+          <p id="music-artist"></p><p id="music-album"></p>
+        </div>
+        <button class="music-button" data-music="stop" aria-label="Stop"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></button>
+        <button class="music-button" data-music="jam" aria-label="Start Jam"><svg viewBox="0 0 24 24"><path d="M9 15V6l10-3v11M9 10l10-3"/><ellipse cx="6" cy="16" rx="3" ry="2.5"/><ellipse cx="16" cy="14" rx="3" ry="2.5"/><path d="M3 21h4m4-1 2 2 7-6"/></svg></button>
+      </div>
+      <input id="music-seek" type="range" min="0" max="1" step="0.1" value="0" aria-label="Song Position">
+      <div class="music-time"><span id="music-position">0:00</span><span id="music-duration">0:00</span></div>
+      <div class="music-controls" role="group" aria-label="Music controls">
+        <button class="music-button" data-music="shuffle" aria-label="Shuffle"><svg viewBox="0 0 24 24"><path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c5 0 7-12 12-12h3m-4-4 4 4-4 4"/></svg></button>
+        <button class="music-button" data-music="previous" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 5v14m13-14L9 12l10 7Z"/></svg></button>
+        <button class="music-button" data-music="toggle" aria-label="Pause"><svg viewBox="0 0 24 24"><path id="music-play-icon" d="M8 5v14m8-14v14"/></svg></button>
+        <button class="music-button" data-music="next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M18 5v14M5 5l10 7-10 7Z"/></svg></button>
+        <button class="music-button" data-music="repeat" aria-label="Repeat"><svg viewBox="0 0 24 24"><path d="m16 2 4 4-4 4M4 11V9a3 3 0 0 1 3-3h13M8 22l-4-4 4-4m12-1v2a3 3 0 0 1-3 3H4"/></svg><small id="music-repeat-one" hidden>1</small></button>
+      </div>
+      <label class="music-volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg><input id="music-volume" aria-label="Music volume" type="range" min="0" max="200" step="5" value="100"><output id="music-volume-value">100%</output></label>
+    </section>
+    <footer>
+      <button data-action="open"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg>Open</button>
+      <button data-action="quit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9M6.5 5.5a9 9 0 1 0 11 0"/></svg>Quit</button>
+    </footer>
+  </main>
+  <div id="music-tooltip" role="tooltip"></div>
+  <div id="icon-menu" role="menu" hidden>
+    <button role="menuitem" data-icon="download-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></svg>Download Icon</button>
+    <button role="menuitem" data-icon="copy-icon-address"><svg viewBox="0 0 24 24"><path d="m10 14 4-4m-6 2-2 2a3.5 3.5 0 1 0 5 5l3-3m2-4 2-2a3.5 3.5 0 1 0-5-5l-3 3"/></svg>Copy Icon Address</button>
+  </div>
+  <script src="tray.js"></script>
+</body>
+</html>
